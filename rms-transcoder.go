@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/RacoonMediaServer/rms-packages/pkg/service/servicemgr"
-	"github.com/RacoonMediaServer/rms-template/internal/config"
-	"github.com/RacoonMediaServer/rms-template/internal/db"
+	"github.com/RacoonMediaServer/rms-transcoder/internal/config"
+	"github.com/RacoonMediaServer/rms-transcoder/internal/db"
 	"github.com/urfave/cli/v2"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
@@ -15,7 +15,7 @@ import (
 
 var Version = "v0.0.0"
 
-const serviceName = "rms-template"
+const serviceName = "rms-transcoder"
 
 func main() {
 	logger.Infof("%s %s", serviceName, Version)
@@ -47,7 +47,9 @@ func main() {
 		}),
 	)
 
-	if useDebug {
+	cfg := config.Config()
+
+	if useDebug || cfg.Debug.Verbose {
 		_ = logger.Init(logger.WithLevel(logger.DebugLevel))
 	}
 

@@ -5,6 +5,7 @@ import "github.com/RacoonMediaServer/rms-packages/pkg/configuration"
 // Configuration represents entire service configuration
 type Configuration struct {
 	Database configuration.Database
+	Debug    configuration.Debug
 }
 
 var config Configuration

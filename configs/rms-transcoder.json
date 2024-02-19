@@ -5,5 +5,8 @@
     "user": "rms",
     "password": "",
     "database": "rms"
+  },
+  "debug": {
+    "verbose": true
   }
 }

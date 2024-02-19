@@ -1,2 +1,2 @@
-# rms-template
-Template repository for microservices
+# rms-transcoder
+Media files transcoder
