@@ -66,10 +66,17 @@ func main() {
 	profilesService := &profiles.Service{
 		Database: database,
 	}
-	transcoderService := &transcoder.Service{}
+	transcoderService := &transcoder.Service{
+		Database: database,
+		Profiles: database,
+	}
 
 	if err = profilesService.Initialize(); err != nil {
 		logger.Fatalf("Initialize profile service failed: %s", err)
+	}
+
+	if err = transcoderService.Initialize(); err != nil {
+		logger.Fatalf("Initialize transcoder service failed: %s", err)
 	}
 
 	if err = rms_transcoder.RegisterProfilesHandler(service.Server(), profilesService); err != nil {

@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/RacoonMediaServer/rms-packages/pkg/configuration"
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+	"github.com/RacoonMediaServer/rms-transcoder/internal/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,7 +18,7 @@ func Connect(config configuration.Database) (*Database, error) {
 		return nil, err
 	}
 
-	if err = db.AutoMigrate(&rms_transcoder.Profile{}); err != nil {
+	if err = db.AutoMigrate(&rms_transcoder.Profile{}, &model.Job{}); err != nil {
 		return nil, err
 	}
 

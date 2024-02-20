@@ -7,6 +7,12 @@ import (
 )
 
 type Service struct {
+	Profiles ProfileService
+	Database Database
+}
+
+func (s Service) Initialize() error {
+	return nil
 }
 
 func (s Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequest, response *rms_transcoder.AddJobResponse) error {
