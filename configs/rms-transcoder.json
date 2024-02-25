@@ -8,5 +8,8 @@
   },
   "debug": {
     "verbose": true
+  },
+  "transcoding": {
+    "workers": 4
   }
 }

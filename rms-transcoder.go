@@ -8,6 +8,7 @@ import (
 	"github.com/RacoonMediaServer/rms-transcoder/internal/db"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/service/profiles"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/service/transcoder"
+	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
 	"github.com/urfave/cli/v2"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
@@ -63,12 +64,15 @@ func main() {
 		logger.Fatalf("Connect to database failed: %s", err)
 	}
 
+	workers := worker.New(cfg.Transcoding.Workers)
+
 	profilesService := &profiles.Service{
 		Database: database,
 	}
 	transcoderService := &transcoder.Service{
 		Database: database,
 		Profiles: database,
+		Workers:  workers,
 	}
 
 	if err = profilesService.Initialize(); err != nil {
@@ -90,4 +94,6 @@ func main() {
 	if err = service.Run(); err != nil {
 		logger.Fatalf("Run service failed: %s", err)
 	}
+
+	workers.Stop()
 }

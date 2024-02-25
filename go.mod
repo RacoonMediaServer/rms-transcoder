@@ -3,10 +3,12 @@ module github.com/RacoonMediaServer/rms-transcoder
 go 1.20
 
 require (
-	github.com/RacoonMediaServer/rms-packages v1.12.5
+	github.com/RacoonMediaServer/rms-packages v1.12.6
 	github.com/go-micro/plugins/v4/registry/etcd v1.2.0
+	github.com/google/uuid v1.2.0
 	github.com/urfave/cli/v2 v2.3.0
 	go-micro.dev/v4 v4.9.0
+	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/postgres v1.4.7
 	gorm.io/gorm v1.24.5
 )
@@ -32,7 +34,6 @@ require (
 	github.com/gobwas/ws v1.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -67,7 +68,6 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c // indirect
 	google.golang.org/grpc v1.38.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
