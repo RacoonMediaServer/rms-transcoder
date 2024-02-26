@@ -15,12 +15,14 @@ type Service struct {
 	cancel context.CancelFunc
 	mu     sync.Mutex
 	q      chan *receipt
+	done   chan string
 }
 
 func New(workers uint) *Service {
 	s := &Service{
-		q: make(chan *receipt, workers*maxTasksPerWorker),
-		l: logger.DefaultLogger.Fields(map[string]interface{}{"from": "worker"}),
+		q:    make(chan *receipt, workers*maxTasksPerWorker),
+		done: make(chan string, workers*maxTasksPerWorker),
+		l:    logger.DefaultLogger.Fields(map[string]interface{}{"from": "worker"}),
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
@@ -41,8 +43,13 @@ func (s *Service) Do(t Task) Receipt {
 	return r
 }
 
+func (s *Service) DoneChannel() chan<- string {
+	return s.done
+}
+
 func (s *Service) Stop() {
 	s.cancel()
 	s.wg.Wait()
 	close(s.q)
+	close(s.done)
 }

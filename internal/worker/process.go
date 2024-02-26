@@ -7,6 +7,7 @@ func (s *Service) workerProcess() {
 			return
 		case r := <-s.q:
 			r.run()
+			s.done <- r.t.ID()
 		}
 	}
 }
