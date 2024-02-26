@@ -19,4 +19,5 @@ type Database interface {
 
 type Workers interface {
 	Do(t worker.Task) worker.Receipt
+	DoneChannel() <-chan string
 }

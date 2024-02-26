@@ -20,7 +20,7 @@ func (t *transcodingTask) ID() string {
 }
 
 func (t *transcodingTask) Do(ctx context.Context) error {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 30; i++ {
 		select {
 		case <-time.After(1 * time.Second):
 			t.l.Logf(logger.InfoLevel, "I am alive %d", i)

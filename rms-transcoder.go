@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/RacoonMediaServer/rms-packages/pkg/pubsub"
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
 	"github.com/RacoonMediaServer/rms-packages/pkg/service/servicemgr"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/config"
@@ -70,9 +71,10 @@ func main() {
 		Database: database,
 	}
 	transcoderService := &transcoder.Service{
-		Database: database,
-		Profiles: database,
-		Workers:  workers,
+		Database:  database,
+		Profiles:  database,
+		Workers:   workers,
+		Publisher: pubsub.NewPublisher(service),
 	}
 
 	if err = profilesService.Initialize(); err != nil {

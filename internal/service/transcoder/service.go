@@ -8,17 +8,23 @@ import (
 	"github.com/RacoonMediaServer/rms-transcoder/internal/model"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
 	"github.com/google/uuid"
+	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"sync"
 )
 
 type Service struct {
-	l        logger.Logger
-	Profiles ProfileService
-	Database Database
-	Workers  Workers
+	Profiles  ProfileService
+	Database  Database
+	Workers   Workers
+	Publisher micro.Event
 
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
+	l    logger.Logger
 	mu   sync.RWMutex
 	jobs map[string]*jobRecord
 }
@@ -31,6 +37,7 @@ type jobRecord struct {
 func (s *Service) Initialize() error {
 	s.l = logger.DefaultLogger.Fields(map[string]interface{}{"from": "transcoder"})
 	s.jobs = make(map[string]*jobRecord)
+	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	jobs, err := s.Database.LoadJobs()
 	if err != nil {
@@ -58,6 +65,12 @@ func (s *Service) Initialize() error {
 		}
 		s.jobs[job.ID] = &record
 	}
+
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		s.processReadyJobs()
+	}()
 	return nil
 }
 
@@ -130,10 +143,20 @@ func (s *Service) GetJob(ctx context.Context, request *rms_transcoder.GetJobRequ
 }
 
 func (s *Service) CancelJob(ctx context.Context, request *rms_transcoder.CancelJobRequest, empty *emptypb.Empty) error {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	if err := s.cancelJob(request.JobId); err != nil {
+		return err
+	}
+	if err := s.Database.RemoveJob(request.JobId); err != nil {
+		s.l.Logf(logger.ErrorLevel, "Remove job %s from database failed: %s", request.JobId, err)
+	}
+	return nil
+}
 
-	record, ok := s.jobs[request.JobId]
+func (s *Service) cancelJob(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	record, ok := s.jobs[id]
 	if !ok {
 		return errors.New("job not found")
 	}
@@ -143,5 +166,12 @@ func (s *Service) CancelJob(ctx context.Context, request *rms_transcoder.CancelJ
 		r.Cancel()
 	}
 
+	delete(s.jobs, id)
+
 	return nil
+}
+
+func (s *Service) Stop() {
+	s.cancel()
+	s.wg.Wait()
 }

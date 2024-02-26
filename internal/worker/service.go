@@ -43,7 +43,7 @@ func (s *Service) Do(t Task) Receipt {
 	return r
 }
 
-func (s *Service) DoneChannel() chan<- string {
+func (s *Service) DoneChannel() <-chan string {
 	return s.done
 }
 

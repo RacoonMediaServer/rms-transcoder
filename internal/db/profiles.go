@@ -34,5 +34,5 @@ func (d *Database) UpdateProfile(profile *rms_transcoder.Profile) error {
 }
 
 func (d *Database) RemoveProfile(id string) error {
-	return d.conn.Model(&rms_transcoder.Profile{}).Unscoped().Delete(&rms_transcoder.Profile{}, id).Error
+	return d.conn.Model(&rms_transcoder.Profile{}).Unscoped().Delete(&rms_transcoder.Profile{Id: id}).Error
 }

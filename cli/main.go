@@ -58,7 +58,7 @@ func add(cli rms_transcoder.TranscoderService) error {
 		Profile:      "telegram",
 		Source:       "source1",
 		Destination:  uuid.NewString() + ".mp4",
-		AutoComplete: false,
+		AutoComplete: true,
 	}
 
 	resp, err := cli.AddJob(context.Background(), &req, client.WithRequestTimeout(40*time.Second))

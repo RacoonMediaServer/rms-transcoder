@@ -6,6 +6,7 @@ const (
 	JobNotComplete JobResult = iota
 	JobDone
 	JobFailed
+	JobCancelled
 )
 
 type Job struct {
