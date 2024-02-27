@@ -76,6 +76,7 @@ func main() {
 		Profiles:  database,
 		Workers:   workers,
 		Publisher: pubsub.NewPublisher(service),
+		Config:    cfg.Transcoding,
 	}
 
 	if err = profilesService.Initialize(); err != nil {

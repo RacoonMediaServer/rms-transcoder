@@ -11,6 +11,7 @@
   },
   "transcoding": {
     "workers": 4,
-    "max_job_duration": 60
+    "max_job_duration": 60,
+    "directory": "content"
   }
 }

@@ -3,6 +3,8 @@ package transcoder
 import (
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
+	"os"
+	"path/filepath"
 )
 
 func (s *Service) runTranscodingTask(record *jobRecord) {
@@ -30,4 +32,13 @@ func convertStatus(status worker.Status) rms_transcoder.GetJobResponse_Status {
 	default:
 		return rms_transcoder.GetJobResponse_Failed
 	}
+}
+
+func clearContent(directory, destination string) error {
+	path := filepath.Join(directory, destination)
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil
+	}
+	return os.Remove(path)
 }

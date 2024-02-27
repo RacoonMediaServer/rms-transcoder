@@ -13,6 +13,7 @@ type Transcoding struct {
 	Workers uint
 	// Minutes
 	MaxJobDuration uint `json:"max_job_duration"`
+	Directory      string
 }
 
 var config Configuration

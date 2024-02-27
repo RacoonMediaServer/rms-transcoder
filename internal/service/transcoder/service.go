@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+	"github.com/RacoonMediaServer/rms-transcoder/internal/config"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/model"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
 	"github.com/google/uuid"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -19,6 +22,7 @@ type Service struct {
 	Database  Database
 	Workers   Workers
 	Publisher micro.Event
+	Config    config.Transcoding
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -35,6 +39,11 @@ type jobRecord struct {
 }
 
 func (s *Service) Initialize() error {
+	fi, err := os.Stat(s.Config.Directory)
+	if err != nil || !fi.IsDir() {
+		return fmt.Errorf("problem with content directory: %w", err)
+	}
+
 	s.l = logger.DefaultLogger.Fields(map[string]interface{}{"from": "transcoder"})
 	s.jobs = make(map[string]*jobRecord)
 	s.ctx, s.cancel = context.WithCancel(context.Background())
@@ -79,8 +88,8 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 	job := model.Job{
 		JobID:        id.String(),
 		Profile:      profile,
-		Source:       request.Source,
-		Destination:  request.Destination,
+		Source:       filepath.Join(s.Config.Directory, request.Source),
+		Destination:  filepath.Join(s.Config.Directory, request.Destination),
 		AutoComplete: request.AutoComplete,
 	}
 	if err = s.Database.AddJob(&job); err != nil {
@@ -119,22 +128,28 @@ func (s *Service) GetJob(ctx context.Context, request *rms_transcoder.GetJobRequ
 }
 
 func (s *Service) CancelJob(ctx context.Context, request *rms_transcoder.CancelJobRequest, empty *emptypb.Empty) error {
-	if err := s.cancelJob(request.JobId); err != nil {
+	record, err := s.getAndCancelJob(request.JobId)
+	if err != nil {
 		return err
 	}
 	if err := s.Database.RemoveJob(request.JobId); err != nil {
 		s.l.Logf(logger.ErrorLevel, "Remove job %s from database failed: %s", request.JobId, err)
 	}
+	if request.RemoveFiles {
+		if err = clearContent(s.Config.Directory, record.job.Destination); err != nil {
+			s.l.Logf(logger.WarnLevel, "Clear content for %s failed: %s", request.JobId, err)
+		}
+	}
 	return nil
 }
 
-func (s *Service) cancelJob(id string) error {
+func (s *Service) getAndCancelJob(id string) (*jobRecord, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	record, ok := s.jobs[id]
 	if !ok {
-		return errors.New("job not found")
+		return nil, errors.New("job not found")
 	}
 
 	r := record.receipt
@@ -144,9 +159,7 @@ func (s *Service) cancelJob(id string) error {
 
 	delete(s.jobs, id)
 
-	// TODO: clear content
-
-	return nil
+	return record, nil
 }
 
 func (s *Service) Stop() {
