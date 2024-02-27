@@ -10,6 +10,7 @@
     "verbose": true
   },
   "transcoding": {
-    "workers": 4
+    "workers": 4,
+    "max_job_duration": 60
   }
 }

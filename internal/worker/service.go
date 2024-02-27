@@ -4,25 +4,28 @@ import (
 	"context"
 	"go-micro.dev/v4/logger"
 	"sync"
+	"time"
 )
 
 const maxTasksPerWorker = 1000
 
 type Service struct {
-	l      logger.Logger
-	wg     sync.WaitGroup
-	ctx    context.Context
-	cancel context.CancelFunc
-	mu     sync.Mutex
-	q      chan *receipt
-	done   chan string
+	l           logger.Logger
+	wg          sync.WaitGroup
+	ctx         context.Context
+	cancel      context.CancelFunc
+	mu          sync.Mutex
+	q           chan *receipt
+	done        chan string
+	maxDuration time.Duration
 }
 
-func New(workers uint) *Service {
+func New(workers uint, maxDuration time.Duration) *Service {
 	s := &Service{
-		q:    make(chan *receipt, workers*maxTasksPerWorker),
-		done: make(chan string, workers*maxTasksPerWorker),
-		l:    logger.DefaultLogger.Fields(map[string]interface{}{"from": "worker"}),
+		q:           make(chan *receipt, workers*maxTasksPerWorker),
+		done:        make(chan string, workers*maxTasksPerWorker),
+		l:           logger.DefaultLogger.Fields(map[string]interface{}{"from": "worker"}),
+		maxDuration: maxDuration,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 

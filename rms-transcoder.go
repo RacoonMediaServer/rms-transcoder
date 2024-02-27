@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
+	"time"
 
 	// Plugins
 	_ "github.com/go-micro/plugins/v4/registry/etcd"
@@ -65,7 +66,7 @@ func main() {
 		logger.Fatalf("Connect to database failed: %s", err)
 	}
 
-	workers := worker.New(cfg.Transcoding.Workers)
+	workers := worker.New(cfg.Transcoding.Workers, time.Duration(cfg.Transcoding.MaxJobDuration)*time.Minute)
 
 	profilesService := &profiles.Service{
 		Database: database,

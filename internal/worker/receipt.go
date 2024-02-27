@@ -4,6 +4,7 @@ import (
 	"context"
 	"go-micro.dev/v4/logger"
 	"sync"
+	"time"
 )
 
 type Status int
@@ -58,7 +59,8 @@ func (r *receipt) setStatus(status Status) {
 	r.status = status
 }
 
-func (r *receipt) run() {
+func (r *receipt) run(timeout time.Duration) {
+	defer r.cancel() // prevent context leak
 	defer func() {
 		if err := recover(); err != nil {
 			r.l.Logf(logger.ErrorLevel, "Panic: %s", err)
@@ -74,12 +76,14 @@ func (r *receipt) run() {
 	default:
 	}
 
+	ctx, cancel := context.WithTimeout(r.ctx, timeout)
+	defer cancel()
+
 	r.setStatus(Active)
-	if err := r.t.Do(r.ctx); err != nil {
+	if err := r.t.Do(ctx); err != nil {
 		r.l.Logf(logger.ErrorLevel, "Job failed: %s", err)
 		r.setStatus(Failed)
 	} else {
 		r.setStatus(Done)
 	}
-	r.cancel()
 }
