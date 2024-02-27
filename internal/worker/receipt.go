@@ -2,8 +2,6 @@ package worker
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"go-micro.dev/v4/logger"
 	"sync"
 )
@@ -11,15 +9,14 @@ import (
 type Status int
 
 const (
-	Pending = iota
+	Pending Status = iota
 	Active
 	Done
 	Failed
-	Cancelled
 )
 
 type Receipt interface {
-	Status() (Status, error)
+	Status() Status
 	Cancel()
 }
 
@@ -31,7 +28,6 @@ type receipt struct {
 
 	mu     sync.RWMutex
 	status Status
-	err    error
 }
 
 func (s *Service) newReceipt(t Task) *receipt {
@@ -45,45 +41,45 @@ func (s *Service) newReceipt(t Task) *receipt {
 
 func (r *receipt) Cancel() {
 	r.cancel()
-	r.setStatus(Cancelled, nil)
 }
 
-func (r *receipt) Status() (Status, error) {
+func (r *receipt) Status() Status {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.status, r.err
+	return r.status
 }
 
-func (r *receipt) setStatus(s Status, err error) {
+func (r *receipt) setStatus(status Status) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.l.Logf(logger.DebugLevel, "Set status = %d, err = %s", s, err)
-	r.status, r.err = s, err
+	r.l.Logf(logger.DebugLevel, "Set status = %d", status)
+	r.status = status
 }
 
 func (r *receipt) run() {
 	defer func() {
 		if err := recover(); err != nil {
-			r.setStatus(Failed, fmt.Errorf("%+v", err))
+			r.l.Logf(logger.ErrorLevel, "Panic: %s", err)
+			r.setStatus(Failed)
 		}
 	}()
 
 	select {
 	case <-r.ctx.Done():
+		r.setStatus(Failed)
 		r.l.Logf(logger.DebugLevel, "Skip cancelled task")
 		return
 	default:
 	}
 
-	r.setStatus(Active, nil)
+	r.setStatus(Active)
 	if err := r.t.Do(r.ctx); err != nil {
-		if !errors.Is(err, context.Canceled) {
-			r.setStatus(Failed, err)
-		}
+		r.l.Logf(logger.ErrorLevel, "Job failed: %s", err)
+		r.setStatus(Failed)
 	} else {
-		r.setStatus(Done, nil)
+		r.setStatus(Done)
 	}
 	r.cancel()
 }

@@ -6,6 +6,7 @@ func (s *Service) workerProcess() {
 		case <-s.ctx.Done():
 			return
 		case r := <-s.q:
+			// TODO: add deadline
 			r.run()
 			s.done <- r.t.ID()
 		}

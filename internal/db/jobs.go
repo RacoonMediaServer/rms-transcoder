@@ -21,5 +21,5 @@ func (d *Database) UpdateJob(profile *model.Job) error {
 }
 
 func (d *Database) RemoveJob(id string) error {
-	return d.conn.Model(&model.Job{}).Unscoped().Delete(&model.Job{ID: id}).Error
+	return d.conn.Model(&model.Job{}).Unscoped().Delete(&model.Job{JobID: id}).Error
 }

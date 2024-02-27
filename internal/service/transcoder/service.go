@@ -44,27 +44,19 @@ func (s *Service) Initialize() error {
 		return err
 	}
 
-	s.l.Logf(logger.InfoLevel, "Rerun loaded jobs...")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	rerun := 0
 	for _, job := range jobs {
 		record := jobRecord{job: job}
-		if job.Result == model.JobNotComplete {
-			profile, err := s.Profiles.GetProfile(job.Profile)
-			if err != nil || profile == nil {
-				if err == nil {
-					err = errors.New("profile not found")
-				}
-				s.l.Logf(logger.ErrorLevel, "Cannot rerun task %s: %s", job.ID, err)
-				job.Result = model.JobFailed
-			} else {
-				s.runTranscodingTask(&record, profile)
-				continue
-			}
+		s.jobs[job.JobID] = &record
+		if !job.Done {
+			s.runTranscodingTask(&record)
+			rerun++
 		}
-		s.jobs[job.ID] = &record
 	}
+
+	s.l.Logf(logger.InfoLevel, "Rerun jobs: %d / %d", rerun, len(jobs))
 
 	s.wg.Add(1)
 	go func() {
@@ -85,8 +77,8 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 		return fmt.Errorf("cannot use profile '%s': %w", request.Profile, err)
 	}
 	job := model.Job{
-		ID:           id.String(),
-		Profile:      request.Profile,
+		JobID:        id.String(),
+		Profile:      profile,
 		Source:       request.Source,
 		Destination:  request.Destination,
 		AutoComplete: request.AutoComplete,
@@ -95,11 +87,14 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 		s.l.Logf(logger.ErrorLevel, "Add job to database failed: %s", err)
 		return err
 	}
-	response.JobId = job.ID
+	response.JobId = job.JobID
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.runTranscodingTask(&jobRecord{job: &job}, profile)
+	record := jobRecord{job: &job}
+	s.jobs[job.JobID] = &record
+	s.runTranscodingTask(&record)
+
 	return nil
 }
 
@@ -115,28 +110,9 @@ func (s *Service) GetJob(ctx context.Context, request *rms_transcoder.GetJobRequ
 	j, r := record.job, record.receipt
 	response.Destination = j.Destination
 	if r != nil {
-		status, _ := r.Status()
-		switch status {
-		case worker.Pending:
-			response.Status = rms_transcoder.GetJobResponse_Pending
-		case worker.Active:
-			response.Status = rms_transcoder.GetJobResponse_Processing
-		case worker.Done:
-			response.Status = rms_transcoder.GetJobResponse_Done
-		case worker.Cancelled:
-			fallthrough
-		case worker.Failed:
-			response.Status = rms_transcoder.GetJobResponse_Failed
-		}
+		response.Status = convertStatus(r.Status())
 	} else {
-		switch j.Result {
-		case model.JobNotComplete:
-			response.Status = rms_transcoder.GetJobResponse_Pending
-		case model.JobDone:
-			response.Status = rms_transcoder.GetJobResponse_Done
-		case model.JobFailed:
-			response.Status = rms_transcoder.GetJobResponse_Failed
-		}
+		response.Status = rms_transcoder.GetJobResponse_Done
 	}
 
 	return nil
@@ -167,6 +143,8 @@ func (s *Service) cancelJob(id string) error {
 	}
 
 	delete(s.jobs, id)
+
+	// TODO: clear content
 
 	return nil
 }

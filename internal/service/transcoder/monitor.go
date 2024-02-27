@@ -3,7 +3,6 @@ package transcoder
 import (
 	"context"
 	"github.com/RacoonMediaServer/rms-packages/pkg/events"
-	"github.com/RacoonMediaServer/rms-transcoder/internal/model"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
 	"go-micro.dev/v4/logger"
 	"time"
@@ -21,37 +20,28 @@ func (s *Service) processReadyJobs() {
 	}
 }
 
-func (s *Service) getAndUpdateJob(id string) (*jobRecord, bool) {
+func (s *Service) getAndUpdateJob(id string) *jobRecord {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	record, ok := s.jobs[id]
 	if !ok {
-		return nil, false
+		return nil
 	}
 
-	isCancelled := false
-	status, _ := record.receipt.Status()
-	switch status {
-	case worker.Done:
-		record.job.Result = model.JobDone
-	case worker.Failed:
-		record.job.Result = model.JobFailed
-	case worker.Cancelled:
-		isCancelled = true
-	default:
-	}
+	status := record.receipt.Status()
+	record.job.Done = status == worker.Done
 
 	if record.job.AutoComplete {
 		delete(s.jobs, id)
 	}
 
-	return record, isCancelled
+	return record
 }
 
 func (s *Service) processReadyJob(id string) {
-	record, isCancelled := s.getAndUpdateJob(id)
-	if record == nil || isCancelled {
+	record := s.getAndUpdateJob(id)
+	if record == nil {
 		return
 	}
 
@@ -59,7 +49,7 @@ func (s *Service) processReadyJob(id string) {
 		if err := s.Database.RemoveJob(id); err != nil {
 			s.l.Logf(logger.ErrorLevel, "Remove job %s failed: %s", id, err)
 		}
-
+		s.sendNotification(record)
 	} else {
 		if err := s.Database.UpdateJob(record.job); err != nil {
 			s.l.Logf(logger.ErrorLevel, "Update job %s failed: %s", id, err)
@@ -70,9 +60,11 @@ func (s *Service) processReadyJob(id string) {
 
 func (s *Service) sendNotification(record *jobRecord) {
 	kind := events.Notification_TranscodingDone
-	if record.job.Result != model.JobDone {
+	if record.receipt.Status() != worker.Done {
 		kind = events.Notification_TranscodingFailed
 	}
+
+	// TODO: fill other parameters
 	notification := events.Notification{
 		Sender:        "rms-transcoder",
 		Kind:          kind,
