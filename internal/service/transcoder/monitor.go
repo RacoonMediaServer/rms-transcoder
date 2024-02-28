@@ -5,6 +5,7 @@ import (
 	"github.com/RacoonMediaServer/rms-packages/pkg/events"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
 	"go-micro.dev/v4/logger"
+	"path/filepath"
 	"time"
 )
 
@@ -64,19 +65,19 @@ func (s *Service) sendNotification(record *jobRecord) {
 		kind = events.Notification_TranscodingFailed
 	}
 
-	// TODO: fill other parameters
+	fileSize := uint32(getFileSize(filepath.Join(s.Config.Directory, record.job.Destination)) / 1024)
 	notification := events.Notification{
 		Sender:        "rms-transcoder",
 		Kind:          kind,
-		TorrentID:     nil,
-		MediaID:       nil,
-		ItemTitle:     nil,
-		VideoLocation: nil,
-		SizeMB:        nil,
+		ItemTitle:     &record.job.Source,
+		VideoLocation: &record.job.Destination,
+		SizeMB:        &fileSize,
 	}
 
+	s.wg.Add(1)
 	go func() {
-		ctx, cancel := context.WithTimeout(context.TODO(), 20*time.Second)
+		defer s.wg.Done()
+		ctx, cancel := context.WithTimeout(s.ctx, 20*time.Second)
 		defer cancel()
 		if err := s.Publisher.Publish(ctx, &notification); err != nil {
 			s.l.Logf(logger.ErrorLevel, "Send notification failed: %s", err)

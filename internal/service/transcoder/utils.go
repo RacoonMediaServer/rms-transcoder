@@ -42,3 +42,11 @@ func clearContent(directory, destination string) error {
 	}
 	return os.Remove(path)
 }
+
+func getFileSize(file string) int64 {
+	fi, err := os.Stat(file)
+	if err != nil {
+		return 0
+	}
+	return fi.Size()
+}
