@@ -1,6 +1,9 @@
 package model
 
-import rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+import (
+	"github.com/RacoonMediaServer/rms-packages/pkg/media"
+	"gorm.io/datatypes"
+)
 
 type JobResult int
 
@@ -12,8 +15,8 @@ const (
 )
 
 type Job struct {
-	JobID        string                  `gorm:"primaryKey"`
-	Profile      *rms_transcoder.Profile `gorm:"embedded"`
+	JobID        string `gorm:"primaryKey"`
+	Transcoding  datatypes.JSONType[media.TranscodingSettings]
 	Source       string
 	Destination  string `gorm:"unique"`
 	AutoComplete bool

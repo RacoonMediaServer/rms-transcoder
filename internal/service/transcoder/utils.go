@@ -3,18 +3,27 @@ package transcoder
 import (
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
+	"go-micro.dev/v4/logger"
+	"net/url"
 	"os"
 	"path/filepath"
 )
 
 func (s *Service) runTranscodingTask(record *jobRecord) {
 	job := record.job
+	source := job.Source
+	if isFileSource(source) {
+		source = filepath.Join(s.Config.Directory, source)
+	}
+	destination := filepath.Join(s.Config.Directory, job.Destination)
+
+	settings := record.job.Transcoding.Data()
 	task := transcodingTask{
 		l:           s.l.Fields(map[string]interface{}{"job": job.JobID}),
 		id:          job.JobID,
-		profile:     record.job.Profile,
-		source:      job.Source,
-		destination: job.Destination,
+		settings:    &settings,
+		source:      source,
+		destination: destination,
 	}
 	record.receipt = s.Workers.Do(&task)
 }
@@ -49,4 +58,14 @@ func getFileSize(file string) int64 {
 		return 0
 	}
 	return fi.Size()
+}
+
+func isFileSource(source string) bool {
+	u, err := url.Parse(source)
+	if err != nil {
+		logger.Warnf("Possible incorrect URL: %s", err)
+		return true
+	}
+
+	return u.Scheme == "" || u.Scheme == "file"
 }

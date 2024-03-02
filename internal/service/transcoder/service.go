@@ -12,8 +12,8 @@ import (
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"gorm.io/datatypes"
 	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -85,11 +85,12 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 	if err != nil || profile == nil {
 		return fmt.Errorf("cannot use profile '%s': %w", request.Profile, err)
 	}
+
 	job := model.Job{
 		JobID:        id.String(),
-		Profile:      profile,
-		Source:       filepath.Join(s.Config.Directory, request.Source),
-		Destination:  filepath.Join(s.Config.Directory, request.Destination),
+		Transcoding:  datatypes.NewJSONType(*profile.Settings),
+		Source:       request.Source,
+		Destination:  request.Destination,
 		AutoComplete: request.AutoComplete,
 	}
 	if err = s.Database.AddJob(&job); err != nil {

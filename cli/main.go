@@ -37,7 +37,7 @@ func main() {
 
 	switch command {
 	case "add":
-		if err := add(client); err != nil {
+		if err := add(client, job); err != nil {
 			panic(err)
 		}
 	case "status":
@@ -53,12 +53,12 @@ func main() {
 	}
 }
 
-func add(cli rms_transcoder.TranscoderService) error {
+func add(cli rms_transcoder.TranscoderService, src string) error {
 	req := rms_transcoder.AddJobRequest{
 		Profile:      "telegram",
-		Source:       "source1",
+		Source:       src,
 		Destination:  uuid.NewString() + ".mp4",
-		AutoComplete: true,
+		AutoComplete: false,
 	}
 
 	resp, err := cli.AddJob(context.Background(), &req, client.WithRequestTimeout(40*time.Second))

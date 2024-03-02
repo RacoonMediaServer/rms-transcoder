@@ -1,21 +1,26 @@
 package profiles
 
-import rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+import (
+	"github.com/RacoonMediaServer/rms-packages/pkg/media"
+	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+)
 
 var predefinedProfiles = map[string]*rms_transcoder.Profile{
 	"telegram": {
-		Id:          "telegram",
-		VideoMute:   false,
-		VideoCodec:  makePtr("h264"),
-		VideoWidth:  makePtr[uint32](480),
-		VideoHeight: makePtr[uint32](320),
-		AudioMute:   true,
-		IsReserved:  true,
-		IsReadOnly:  true,
+		Id: "telegram",
+		Settings: &media.TranscodingSettings{
+			Video: &media.VideoTranscodingSettings{
+				Codec:  makePtr("h264"),
+				Width:  makePtr[uint32](480),
+				Height: makePtr[uint32](320),
+			},
+		},
+		IsReserved: true,
+		IsReadOnly: true,
 	},
 	"default": {
 		Id:         "default",
-		VideoCodec: nil,
+		Settings:   &media.TranscodingSettings{},
 		IsReserved: true,
 	},
 }
