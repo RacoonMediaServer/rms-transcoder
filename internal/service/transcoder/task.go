@@ -16,6 +16,7 @@ type transcodingTask struct {
 	settings    *media.TranscodingSettings
 	source      string
 	destination string
+	dur         *uint32
 }
 
 func (t *transcodingTask) ID() string {
@@ -53,6 +54,10 @@ func (t *transcodingTask) compileStream() *exec.Cmd {
 		if p.Audio.Bitrate != nil {
 			outputArgs["b:a"] = *p.Audio.Bitrate
 		}
+	}
+
+	if t.dur != nil {
+		outputArgs["t"] = *t.dur
 	}
 
 	return stream.Output(t.destination, outputArgs).Compile()

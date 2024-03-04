@@ -12,4 +12,5 @@ type Job struct {
 	Destination  string `gorm:"unique"`
 	AutoComplete bool
 	Done         bool
+	Duration     *uint32
 }

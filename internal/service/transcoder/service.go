@@ -92,6 +92,7 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 		Source:       request.Source,
 		Destination:  request.Destination,
 		AutoComplete: request.AutoComplete,
+		Duration:     request.Duration,
 	}
 	if err = s.Database.AddJob(&job); err != nil {
 		s.l.Logf(logger.ErrorLevel, "Add job to database failed: %s", err)

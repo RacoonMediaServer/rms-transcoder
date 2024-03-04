@@ -24,6 +24,7 @@ func (s *Service) runTranscodingTask(record *jobRecord) {
 		settings:    &settings,
 		source:      source,
 		destination: destination,
+		dur:         job.Duration,
 	}
 	record.receipt = s.Workers.Do(&task)
 }
