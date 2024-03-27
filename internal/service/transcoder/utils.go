@@ -2,7 +2,7 @@ package transcoder
 
 import (
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
-	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
+	"github.com/RacoonMediaServer/rms-packages/pkg/worker"
 	"go-micro.dev/v4/logger"
 	"net/url"
 	"os"

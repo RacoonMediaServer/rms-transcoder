@@ -3,7 +3,7 @@ package transcoder
 import (
 	"context"
 	"github.com/RacoonMediaServer/rms-packages/pkg/events"
-	"github.com/RacoonMediaServer/rms-transcoder/internal/worker"
+	"github.com/RacoonMediaServer/rms-packages/pkg/worker"
 	"go-micro.dev/v4/logger"
 	"path/filepath"
 	"time"
