@@ -3,11 +3,12 @@ package transcoder
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/RacoonMediaServer/rms-packages/pkg/media"
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 	"go-micro.dev/v4/logger"
-	"os"
-	"os/exec"
 )
 
 type transcodingTask struct {
@@ -17,6 +18,7 @@ type transcodingTask struct {
 	source      string
 	destination string
 	dur         *uint32
+	offset      *uint32
 }
 
 func (t *transcodingTask) ID() string {
@@ -58,6 +60,9 @@ func (t *transcodingTask) compileStream() *exec.Cmd {
 
 	if t.dur != nil {
 		outputArgs["t"] = *t.dur
+	}
+	if t.offset != nil {
+		outputArgs["ss"] = *t.offset
 	}
 
 	return stream.Output(t.destination, outputArgs).Compile()

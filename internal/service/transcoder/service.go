@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"sync"
+
 	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
 	"github.com/RacoonMediaServer/rms-packages/pkg/worker"
 	"github.com/RacoonMediaServer/rms-transcoder/internal/config"
@@ -13,8 +16,6 @@ import (
 	"go-micro.dev/v4/logger"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/datatypes"
-	"os"
-	"sync"
 )
 
 type Service struct {
@@ -93,6 +94,7 @@ func (s *Service) AddJob(ctx context.Context, request *rms_transcoder.AddJobRequ
 		Destination:  request.Destination,
 		AutoComplete: request.AutoComplete,
 		Duration:     request.Duration,
+		Offset:       request.Offset,
 	}
 	if err = s.Database.AddJob(&job); err != nil {
 		s.l.Logf(logger.ErrorLevel, "Add job to database failed: %s", err)

@@ -1,12 +1,13 @@
 package transcoder
 
 import (
-	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
-	"github.com/RacoonMediaServer/rms-packages/pkg/worker"
-	"go-micro.dev/v4/logger"
 	"net/url"
 	"os"
 	"path/filepath"
+
+	rms_transcoder "github.com/RacoonMediaServer/rms-packages/pkg/service/rms-transcoder"
+	"github.com/RacoonMediaServer/rms-packages/pkg/worker"
+	"go-micro.dev/v4/logger"
 )
 
 func (s *Service) runTranscodingTask(record *jobRecord) {
@@ -25,6 +26,7 @@ func (s *Service) runTranscodingTask(record *jobRecord) {
 		source:      source,
 		destination: destination,
 		dur:         job.Duration,
+		offset:      job.Offset,
 	}
 	record.receipt = s.Workers.Do(&task)
 }

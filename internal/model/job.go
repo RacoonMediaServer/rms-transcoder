@@ -13,4 +13,5 @@ type Job struct {
 	AutoComplete bool
 	Done         bool
 	Duration     *uint32
+	Offset       *uint32
 }
